@@ -8,51 +8,46 @@ public class MemoryTree {
     private int size;
     private int startAddress;
     private int endAddress;
-    private Process process;
-    private boolean isChildBusy;
+    private int allocated;
 
-    public MemoryTree(int power) {
-        this(power, 0);
+    public MemoryTree(int size) {
+        this(size, 0);
     }
 
-    private MemoryTree(int power, int startAddress) {
-        this.size = (int) Math.pow(2, power);
+    private MemoryTree(int size, int startAddress) {
+        this.size = size;
         this.startAddress = startAddress;
-        this.endAddress = startAddress + size - 1;
-        isChildBusy = false;
-        if (--power > 0) {
-            this.left = new MemoryTree(power, startAddress);
-            this.right = new MemoryTree(power, startAddress + power);
+        this.endAddress = startAddress + this.size - 1;
+        allocated = 0;
+        if (this.size > 2) {
+            this.left = new MemoryTree(this.size/2, startAddress);
+            this.right = new MemoryTree(this.size/2, startAddress + this.size/2);
         }
     }
 
     public boolean allocate(Process process) {
-        if (process.getSize() < this.size / 2) {
-            if (left.allocate(process)) {
-                isChildBusy = true;
-                return true;
-            }
-            if (right.allocate(process)) {
-                isChildBusy = true;
-                return true;
-            }
-            return false;
-        }
-        if (process.getSize() > this.size)
-            return false;
-        if (this.process == null && !isChildBusy) {
-            this.process = process;
+        if (this.size-this.allocated<process.getSize()) return false;
+        if (process.getSize() > size / 2) {   // my size is the best option, no go down
+            if (allocated > 0) return false;
             process.setMemory(this);
+            allocated = this.size;
+            return true;
+        }
+        if (left.allocate(process)) {
+            updateAllocated();
+            return true;
+        }
+        if (right.allocate(process)) {
+            updateAllocated();
             return true;
         }
         return false;
     }
 
-    public Stream<MemoryTree> stream() {
-        if (this.isChildBusy) {
-            return Stream.concat(left.stream(), right.stream());
+    private void updateAllocated() {
+        if(this.left!=null){
+            this.allocated = left.allocated+right.allocated;
         }
-        return Stream.of(this);
     }
 
     @Override
@@ -61,5 +56,13 @@ public class MemoryTree {
                 "startAddress=" + startAddress +
                 ", endAddress=" + endAddress +
                 '}';
+    }
+
+    public int externalFragmentation() {
+        return this.size-this.allocated;
+    }
+
+    public int getSize() {
+        return size;
     }
 }
