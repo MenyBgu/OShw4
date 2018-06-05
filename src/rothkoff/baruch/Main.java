@@ -28,11 +28,36 @@ public class Main {
                     enterProcess();
                     break;
                 case 2:
+                    freeProcess();
                     break;
                 case 3:
+                    printDetails();
                     break;
             }
         } while (menuSelect != 4);
+    }
+
+    private static void printDetails() {
+        System.out.println("Processes:");
+        processes.forEach(System.out::println);
+        System.out.println("Free Blocks: ");
+        memory.printFreeBlocks();
+        System.out.print("Sum of Internal Fragmentation: ");
+        System.out.println(processes.stream().mapToInt(Process::getInternalFragmentation).sum());
+    }
+
+    private static void freeProcess() {
+        System.out.print("Enter process id to release: ");
+        String id = scanner.nextLine();
+       var process = processes.stream().filter(p -> p.getId().equals(id)).findFirst();
+       if(process.isPresent()){
+           process.get().release();
+           if(processes.remove(process.get())){
+               System.out.println("The process released");
+           }
+       }else {
+           System.err.println("The process not exist");
+       }
     }
 
     private static void enterProcess() {

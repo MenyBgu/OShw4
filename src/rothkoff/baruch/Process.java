@@ -30,4 +30,16 @@ public class Process {
                 ", memory=" + memory +
                 '}';
     }
+
+    public String getId() {
+        return id;
+    }
+
+    public void release() {
+        memory.free();
+    }
+
+    public int getInternalFragmentation() {
+        return this.memory.getSize()-this.size;
+    }
 }
